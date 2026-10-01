@@ -2,7 +2,7 @@
 <html lang="pt">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Validação de Peças por QR Code com Histórico</title>
     
     <!-- Configurações PWA -->
@@ -13,84 +13,121 @@
     <!-- SheetJS para leitura de ficheiros Excel -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
         body {
-            font-family: Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             margin: 0;
-            padding: 20px;
+            padding: 12px;
             background-color: #f4f6f9;
             color: #333;
+            -webkit-text-size-adjust: 100%;
         }
         .container {
             max-width: 850px;
             margin: 0 auto;
             background: #fff;
-            padding: 25px;
-            border-radius: 8px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            padding: 16px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
         }
-        h2, h3 {
+        h2 {
+            font-size: 1.25rem;
             color: #2c3e50;
             margin-top: 0;
+            margin-bottom: 16px;
+            text-align: center;
+            line-height: 1.3;
+        }
+        h3 {
+            font-size: 1.1rem;
+            color: #2c3e50;
+            margin: 0;
         }
         .section {
-            margin-bottom: 25px;
-            padding-bottom: 20px;
+            margin-bottom: 20px;
+            padding-bottom: 16px;
             border-bottom: 1px solid #eaeaea;
         }
         .section:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
             border-bottom: none;
         }
         label {
-            font-weight: bold;
+            font-weight: 600;
             display: block;
             margin-bottom: 8px;
+            font-size: 0.95rem;
+            color: #444;
         }
         input[type="file"], input[type="text"] {
             width: 100%;
-            padding: 12px;
-            box-sizing: border-box;
+            padding: 14px;
             border: 1px solid #ccc;
-            border-radius: 4px;
+            border-radius: 8px;
             margin-bottom: 10px;
             font-size: 16px;
+            background: #fff;
         }
         input[type="text"]:focus {
             border-color: #007bff;
             outline: none;
-            box-shadow: 0 0 5px rgba(0,123,255,0.3);
+            box-shadow: 0 0 0 3px rgba(0,123,255,0.15);
         }
         button {
             background-color: #007bff;
             color: white;
             border: none;
-            padding: 10px 20px;
-            font-size: 14px;
-            border-radius: 4px;
+            padding: 12px 20px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            border-radius: 8px;
             cursor: pointer;
+            width: 100%;
+            transition: background-color 0.2s;
+        }
+        button:active {
+            opacity: 0.9;
         }
         button:hover {
             background-color: #0056b3;
         }
         .btn-danger {
             background-color: #dc3545;
-            float: right;
+            width: auto;
+            padding: 8px 14px;
+            font-size: 0.85rem;
         }
         .btn-danger:hover {
             background-color: #c82333;
         }
+        .btn-warning {
+            background-color: #ffc107;
+            color: #212529;
+            width: auto;
+            padding: 8px 14px;
+            font-size: 0.85rem;
+        }
+        .btn-warning:hover {
+            background-color: #e0a800;
+        }
         #statusRef {
-            font-size: 14px;
-            margin-top: 5px;
+            font-size: 0.9rem;
+            margin-top: 8px;
             color: #666;
         }
         #alertaScan {
-            padding: 15px;
-            border-radius: 6px;
-            font-size: 18px;
+            padding: 16px;
+            border-radius: 8px;
+            font-size: 1.05rem;
             font-weight: bold;
             text-align: center;
-            margin-bottom: 15px;
+            margin-top: 10px;
             display: none;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
         }
         .alerta-sucesso {
             background-color: #d4edda;
@@ -102,39 +139,84 @@
             color: #721c24;
             border: 1px solid #f5c6cb;
         }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 15px;
+        
+        /* Sistema de Cards adaptado para Telemóvel e Desktop */
+        .historico-container {
+            margin-top: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 400px;
+            overflow-y: auto;
+            padding-right: 2px;
         }
-        th, td {
-            border: 1px solid #ddd;
-            padding: 10px;
-            text-align: left;
+        .card-historico {
+            background: #fdfdfd;
+            border: 1px solid #e2e8f0;
+            border-left: 5px solid #ccc;
+            border-radius: 8px;
+            padding: 12px 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.02);
         }
-        th {
-            background-color: #f8f9fa;
+        .card-historico.sucesso {
+            border-left-color: #28a745;
+            background-color: #f8fff9;
+        }
+        .card-historico.erro {
+            border-left-color: #dc3545;
+            background-color: #fff8f8;
+        }
+        .card-info {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+        .card-codigo {
+            font-weight: 700;
+            font-size: 1rem;
+            color: #2c3e50;
+            word-break: break-all;
+        }
+        .card-data {
+            font-size: 0.78rem;
+            color: #718096;
         }
         .badge-success {
             color: #155724;
             background-color: #d4edda;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-weight: bold;
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 0.8rem;
+            white-space: nowrap;
         }
         .badge-danger {
             color: #721c24;
             background-color: #f8d7da;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-weight: bold;
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 0.8rem;
+            white-space: nowrap;
+        }
+        .empty-history {
+            text-align: center;
+            color: #888;
+            padding: 20px;
+            font-size: 0.95rem;
+            background: #fafafa;
+            border-radius: 8px;
+            border: 1px dashed #ddd;
         }
         #installContainer {
             display: none;
             background: #e2f0d9;
             border: 1px solid #c6e0b4;
-            padding: 15px;
-            border-radius: 6px;
+            padding: 14px;
+            border-radius: 8px;
             margin-bottom: 20px;
             text-align: center;
         }
@@ -143,17 +225,20 @@
 <body>
 
 <div class="container">
-    <h2>Validação de Peças por QR Code (Digitalização Individual)</h2>
+    <h2>Validação de Peças por QR Code</h2>
 
     <!-- Botão de Instalação PWA -->
     <div id="installContainer">
-        <p style="margin: 0 0 10px 0; font-weight: bold; color: #385723;">Instale esta aplicação no seu dispositivo para acesso rápido e offline!</p>
-        <button id="btnInstall" style="background-color: #385723;">Instalar Aplicação</button>
+        <p style="margin: 0 0 10px 0; font-weight: bold; color: #385723; font-size: 0.9rem;">Instale esta aplicação no seu dispositivo para acesso rápido e offline!</p>
+        <button id="btnInstall" style="background-color: #385723; width: auto; padding: 10px 16px;">Instalar Aplicação</button>
     </div>
 
     <!-- Secção 1: Carregar Referências -->
     <div class="section">
-        <label for="excelFile">1. Carregar Ficheiro Excel (Valores de Referência):</label>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+            <label for="excelFile" style="margin-bottom: 0;">1. Carregar Ficheiro Excel (Valores de Referência):</label>
+            <button class="btn-warning" onclick="limparBaseDadosReferencias()">Limpar Base de Dados</button>
+        </div>
         <input type="file" id="excelFile" accept=".xlsx, .xls, .csv">
         <button onclick="processarExcel()">Importar para Base de Dados</button>
         <div id="statusRef">Estado: Base de dados de referência vazia.</div>
@@ -162,32 +247,21 @@
     <!-- Secção 2: Campo de Digitalização (QR Code / Leitor) -->
     <div class="section">
         <label for="inputQrCode">2. Digitalizar/Ler QR Code da Peça:</label>
-        <input type="text" id="inputQrCode" placeholder="Clique aqui e use o leitor (ou escreva e prima Enter)..." autofocus autocomplete="off">
+        <input type="text" id="inputQrCode" placeholder="Toque aqui e use o leitor..." autocomplete="off">
         
         <!-- Caixa de aviso imediato -->
         <div id="alertaScan">Aguardando leitura...</div>
     </div>
 
-    <!-- Secção 3: Histórico de Leituras da Sessão / Base de Dados -->
+    <!-- Secção 3: Histórico de Leituras em Cards -->
     <div class="section">
-        <div style="display: flex; justify-content: space-between; align-items: center;">
-            <h3 style="margin: 0;">3. Histórico de Peças Validadas</h3>
-            <button class="btn-danger" onclick="limparHistorico()">Limpar Histórico</button>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <h3 style="margin: 0;">3. Histórico</h3>
+            <button class="btn-danger" onclick="limparHistorico()">Limpar</button>
         </div>
-        <table id="tabelaHistorico">
-            <thead>
-                <tr>
-                    <th>Data/Hora</th>
-                    <th>Código da Peça</th>
-                    <th>Estado</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td colspan="3" style="text-align: center; color: #888;">Nenhuma peça lida ainda.</td>
-                </tr>
-            </tbody>
-        </table>
+        <div id="historicoContainer" class="historico-container">
+            <div class="empty-history">Nenhuma peça lida ainda.</div>
+        </div>
     </div>
 </div>
 
@@ -265,8 +339,8 @@
             const total = countRequest.result;
             const statusEl = document.getElementById("statusRef");
             if (total > 0) {
-                statusEl.innerHTML = `Estado: <strong>${total}</strong> referências carregadas na base de dados.`;
-                statusEl.style.color = "green";
+                statusEl.innerHTML = `Estado: <strong>${total}</strong> referências carregadas.`;
+                statusEl.style.color = "#28a745";
             } else {
                 statusEl.innerHTML = "Estado: Base de dados de referência vazia.";
                 statusEl.style.color = "#666";
@@ -325,7 +399,27 @@
         reader.readAsArrayBuffer(file);
     }
 
-    // Evento de escuta do leitor de QR Code (quando pressiona Enter ou o leitor envia a string completa)
+    // Limpar a Base de Dados de Referências com PIN protegido
+    function limparBaseDadosReferencias() {
+        const pinInserido = prompt("Introduza o PIN de segurança para limpar a base de dados de referências:");
+        if (pinInserido === null) return; // Cancelado
+
+        if (pinInserido.trim() === "1563") {
+            const transaction = db.transaction(STORE_REF, "readwrite");
+            const store = transaction.objectStore(STORE_REF);
+            store.clear();
+
+            transaction.oncomplete = () => {
+                alert("Base de dados de referências limpa com sucesso.");
+                verificarRegistosNaBD();
+                document.getElementById("inputQrCode").focus();
+            };
+        } else {
+            alert("PIN incorreto. A operação foi cancelada.");
+        }
+    }
+
+    // Evento de escuta do leitor de QR Code
     const inputQrCode = document.getElementById("inputQrCode");
     inputQrCode.addEventListener("keydown", function(event) {
         if (event.key === "Enter") {
@@ -333,7 +427,7 @@
             const codigoLido = inputQrCode.value.trim();
             if (codigoLido !== "") {
                 validarEDivergirPeca(codigoLido);
-                inputQrCode.value = ""; // Limpa para a próxima leitura
+                inputQrCode.value = ""; 
             }
         }
     });
@@ -348,15 +442,12 @@
         const codigoLimpo = codigo.toUpperCase();
         const transaction = db.transaction(STORE_REF, "readonly");
         const store = transaction.objectStore(STORE_REF);
-        const request = store.get(codigoLimpo); // Busca direta na chave primária (muito rápido)
+        const request = store.get(codigoLimpo);
 
         request.onsuccess = () => {
-            const existe = !!request.result; // true se encontrou, false se não
+            const existe = !!request.result;
             
-            // Mostrar aviso visual imediato
             mostrarAlertaVisual(codigoLimpo, existe);
-
-            // Guardar no Histórico da Base de Dados
             guardarHistoricoItem(codigoLimpo, existe);
         };
     }
@@ -368,10 +459,10 @@
         
         if (existe) {
             alerta.className = "alerta-sucesso";
-            alerta.innerHTML = `✅ PEÇA LISTADA: ${codigo} (Encontrada na referência)`;
+            alerta.innerHTML = `✅ LISTADO: ${codigo}`;
         } else {
             alerta.className = "alerta-erro";
-            alerta.innerHTML = `❌ PEÇA NÃO LISTADA: ${codigo} (EM FALTA!)`;
+            alerta.innerHTML = `❌ NÃO LISTADO: ${codigo} (EM FALTA!)`;
         }
     }
 
@@ -381,7 +472,7 @@
         const store = transaction.objectStore(STORE_HIST);
 
         const novoRegisto = {
-            data: new Date().toLocaleString(),
+            data: new Date().toLocaleTimeString('pt-PT', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' - ' + new Date().toLocaleDateString('pt-PT'),
             codigo: codigo,
             estado: existe ? "Listado" : "Não Listado"
         };
@@ -393,9 +484,9 @@
         };
     }
 
-    // Carregar e listar o histórico da BD na tabela
+    // Carregar e listar o histórico em Cards
     function carregarHistoricoDaBD() {
-        const tbody = document.querySelector("#tabelaHistorico tbody");
+        const container = document.getElementById("historicoContainer");
         const transaction = db.transaction(STORE_HIST, "readonly");
         const store = transaction.objectStore(STORE_HIST);
         const request = store.getAll();
@@ -403,32 +494,42 @@
         request.onsuccess = () => {
             const historico = request.result;
             if (historico.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="3" style="text-align: center; color: #888;">Nenhuma peça lida ainda.</td></tr>';
+                container.innerHTML = '<div class="empty-history">Nenhuma peça lida ainda.</div>';
                 return;
             }
 
-            tbody.innerHTML = "";
-            // Mostra do mais recente para o mais antigo
+            container.innerHTML = "";
             historico.reverse().forEach(item => {
-                const tr = document.createElement("tr");
+                const card = document.createElement("div");
+                const isSucesso = item.estado === "Listado";
+                card.className = `card-historico ${isSucesso ? 'sucesso' : 'erro'}`;
 
-                const tdData = document.createElement("td");
-                tdData.textContent = item.data;
+                const infoDiv = document.createElement("div");
+                infoDiv.className = "card-info";
 
-                const tdPeca = document.createElement("td");
-                tdPeca.textContent = item.codigo;
+                const codigoSpan = document.createElement("span");
+                codigoSpan.className = "card-codigo";
+                codigoSpan.textContent = item.codigo;
 
-                const tdEstado = document.createElement("td");
-                if (item.estado === "Listado") {
-                    tdEstado.innerHTML = '<span class="badge-success">Listado</span>';
+                const dataSpan = document.createElement("span");
+                dataSpan.className = "card-data";
+                dataSpan.textContent = item.data;
+
+                infoDiv.appendChild(codigoSpan);
+                infoDiv.appendChild(dataSpan);
+
+                const badge = document.createElement("span");
+                if (isSucesso) {
+                    badge.className = "badge-success";
+                    badge.textContent = "Listado";
                 } else {
-                    tdEstado.innerHTML = '<span class="badge-danger">Não Listado</span>';
+                    badge.className = "badge-danger";
+                    badge.textContent = "Não Listado";
                 }
 
-                tr.appendChild(tdData);
-                tr.appendChild(tdPeca);
-                tr.appendChild(tdEstado);
-                tbody.appendChild(tr);
+                card.appendChild(infoDiv);
+                card.appendChild(badge);
+                container.appendChild(card);
             });
         };
     }
